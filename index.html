@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Interactive Park - AI Architect Version</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent: #91d5ff;
+            --bg-glass: rgba(15, 23, 42, 0.85);
+            --border-glass: rgba(255, 255, 255, 0.15);
+        }
+
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #050505; 
+            font-family: 'Inter', -apple-system, system-ui, sans-serif; 
+            color: white;
+        }
+
+        /* Merged & Enhanced UI */
+        #ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .panel {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            width: 300px;
+            pointer-events: auto;
+        }
+
+        h2, h3 { 
+            margin: 0 0 12px 0; 
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h2 { 
+            font-size: 1.5rem; 
+            background: linear-gradient(90deg, #4db8ff, #91d5ff); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        }
+
+        h3 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat { 
+            font-size: 0.85rem; 
+            margin-bottom: 8px; 
+            color: #94a3b8; 
+            display: flex; 
+            justify-content: space-between; 
+        }
+
+        .stat span { color: #e2e8f0; font-weight: 500; }
+        
+        /* AI Architect Styling */
+        .ai-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 15px;
+            margin-top: 5px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid #334155;
+            color: white;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        button {
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        button:hover { 
+            background: var(--primary-hover); 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        button:disabled { 
+            background: #475569; 
+            opacity: 0.7;
+            cursor: not-allowed; 
+        }
+        
+        #ai-response {
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            margin-top: 12px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            line-height: 1.5;
+            min-height: 40px;
+        }
+
+        /* Merged Control List */
+        .controls-list {
+            margin-top: 10px;
+        }
+
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+
+        .key {
+            background: #334155;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.7rem;
+        }
+
+        #overlay {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: rgba(255,255,255,0.4);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        .loading-spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="ui-container">
+        <!-- Main Panel -->
+        <div class="panel">
+            <h2>Park Vista</h2>
+            <div class="stat">Camera Mode <span><span id="proj-type">Perspective</span></span></div>
+            <div class="stat">Frame Rate <span>60 FPS</span></div>
+            <button onclick="toggleProjection()" style="margin-bottom: 10px; background: rgba(255,255,255,0.1); border: 1px solid var(--border-glass);">
+                Switch View
+            </button>
+
+            <!-- Merged AI Architect Section -->
+            <div class="ai-section">
+                <h3>✨ AI Architect</h3>
+                <div class="input-group">
+                    <input type="text" id="ai-prompt" placeholder="e.g. A neon cyberpunk night...">
+                </div>
+                <button id="ai-btn" onclick="askArchitect()">
+                    <span id="btn-text">Reimagine Scene</span>
+                    <div class="loading-spinner" id="ai-spinner"></div>
+                </button>
+                <div id="ai-response">Try: "A peaceful desert sunset" or "Cyberpunk rain night"</div>
+            </div>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="panel" style="width: 260px; padding: 15px;">
+            <h3>🎮 Controls</h3>
+            <div class="controls-list">
+                <div class="control-item"><span>Orbit</span> <span class="key">LMB + Drag</span></div>
+                <div class="control-item"><span>Pan</span> <span class="key">RMB + Drag</span></div>
+                <div class="control-item"><span>Zoom</span> <span class="key">Scroll Wheel</span></div>
+                <div class="control-item"><span>Camera Rotation</span> <span class="key">Q / E</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="overlay">Powered by Gemini AI</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        const apiKey = ""; // Set by environment
+        let scene, camera, renderer, controls, perspectiveCam, orthoCam;
+        let isOrtho = false;
+        let fountainParticles = [];
+        let character, treeGroup = [], sunLight, hemiLight;
+        let clock = new THREE.Clock();
+        
+        let sceneParams = {
+            skyColor: 0xbfdbfe,
+            sunIntensity: 1.4,
+            walkSpeed: 10.0, // Higher value means slower speed in this logic
+            fountainGravity: 0.006,
+            groundColor: 0x2d4c1e,
+            pathColor: 0x3d3d3d
+        };
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(sceneParams.skyColor);
+
+            const aspect = window.innerWidth / window.innerHeight;
+            perspectiveCam = new THREE.PerspectiveCamera(50, aspect, 0.1, 1000);
+            perspectiveCam.position.set(55, 40, 55);
+            
+            const d = 50;
+            orthoCam = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
+            orthoCam.position.set(55, 40, 55);
+            
+            camera = perspectiveCam;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            document.body.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.04;
+            controls.maxPolarAngle = Math.PI / 2.1;
+
+            setupLighting();
+            createEnvironment();
+            animate();
+        }
+
+        async function askArchitect() {
+            const promptInput = document.getElementById('ai-prompt');
+            const btn = document.getElementById('ai-btn');
+            const btnText = document.getElementById('btn-text');
+            const spinner = document.getElementById('ai-spinner');
+            const responseDiv = document.getElementById('ai-response');
+            const userPrompt = promptInput.value.trim();
+
+            if (!userPrompt) return;
+
+            btn.disabled = true;
+            btnText.innerText = "Consulting AI...";
+            spinner.style.display = 'block';
+            responseDiv.innerText = "Analyzing environment request...";
+
+            const systemPrompt = `You are a 3D Scene Architect. Based on the user's description, you will output a JSON object to configure a park scene. 
+            Output ONLY valid JSON with these keys:
+            "skyColor": (hex string like "#ffffff"),
+            "sunIntensity": (float 0.1 to 3.0),
+            "walkSpeed": (float 5.0 to 20.0),
+            "fountainGravity": (float 0.001 to 0.02),
+            "groundColor": (hex string),
+            "pathColor": (hex string for the stone walkway),
+            "description": (string, 1 short poetic sentence describing the new vibe).`;
+
+            let retries = 0;
+            const maxRetries = 5;
+
+            async function callGemini() {
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: userPrompt }] }],
+                            systemInstruction: { parts: [{ text: systemPrompt }] },
+                            generationConfig: { responseMimeType: "application/json" }
+                        })
+                    });
+
+                    if (!response.ok) throw new Error('API Error');
+                    const data = await response.json();
+                    const result = JSON.parse(data.candidates[0].content.parts[0].text);
+                    applyAiScene(result);
+                } catch (err) {
+                    if (retries < maxRetries) {
+                        retries++;
+                        const delay = Math.pow(2, retries) * 500;
+                        await new Promise(r => setTimeout(r, delay));
+                        return callGemini();
+                    }
+                    responseDiv.innerText = "Connection lost. Please try again.";
+                } finally {
+                    btn.disabled = false;
+                    btnText.innerText = "Reimagine Scene";
+                    spinner.style.display = 'none';
+                }
+            }
+
+            await callGemini();
+        }
+
+        function applyAiScene(config) {
+            sceneParams.skyColor = new THREE.Color(config.skyColor);
+            sceneParams.sunIntensity = config.sunIntensity;
+            sceneParams.walkSpeed = config.walkSpeed;
+            sceneParams.fountainGravity = config.fountainGravity;
+            sceneParams.groundColor = new THREE.Color(config.groundColor);
+            sceneParams.pathColor = new THREE.Color(config.pathColor);
+
+            scene.background.set(sceneParams.skyColor);
+            sunLight.intensity = sceneParams.sunIntensity;
+            
+            const ground = scene.children.find(c => c.name === "ground_base");
+            if (ground) ground.material.color.set(sceneParams.groundColor);
+            
+            scene.children.filter(c => c.name === "walking_path").forEach(path => {
+                path.material.color.set(sceneParams.pathColor);
+            });
+            
+            document.getElementById('ai-response').innerText = config.description;
+        }
+
+        function setupLighting() {
+            hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.7);
+            scene.add(hemiLight);
+
+            sunLight = new THREE.DirectionalLight(0xfff5e1, 1.4);
+            sunLight.position.set(30, 50, 20);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 4096;
+            sunLight.shadow.mapSize.height = 4096;
+            sunLight.shadow.camera.left = -60;
+            sunLight.shadow.camera.right = 60;
+            sunLight.shadow.camera.top = 60;
+            sunLight.shadow.camera.bottom = -60;
+            sunLight.shadow.bias = -0.0005;
+            scene.add(sunLight);
+        }
+
+        function createEnvironment() {
+            const axes = new THREE.AxesHelper(15);
+            axes.position.y = 0.1;
+            scene.add(axes);
+
+            const groundGeo = new THREE.CircleGeometry(80, 64);
+            const groundMat = new THREE.MeshStandardMaterial({ 
+                color: sceneParams.groundColor, 
+                roughness: 0.8,
+                metalness: 0.1
+            });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.name = "ground_base";
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            createComplexWalkingPaths();
+
+            const monument = createObelisk();
+            monument.position.set(-25, 0, -25);
+            scene.add(monument);
+
+            const pavilion = createPavilion();
+            pavilion.position.set(25, 0, -25);
+            scene.add(pavilion);
+
+            const skyscraper = createSkyscraper();
+            skyscraper.position.set(15, 0, 45);
+            scene.add(skyscraper);
+
+            const library = createLibrary();
+            library.position.set(-40, 0, 15);
+            scene.add(library);
+
+            for(let i=0; i<12; i++) {
+                const angle = (i / 12) * Math.PI * 2;
+                const r = 50 + Math.random() * 10;
+                const t = createTree();
+                t.position.set(Math.cos(angle)*r, 0, Math.sin(angle)*r);
+                t.rotation.y = Math.random() * Math.PI;
+                scene.add(t);
+                treeGroup.push(t);
+            }
+
+            createFountain();
+            createMovingCharacter();
+            createBenches();
+        }
+
+        function createComplexWalkingPaths() {
+            const pathMaterial = new THREE.MeshStandardMaterial({ 
+                color: sceneParams.pathColor, 
+                roughness: 0.9, 
+                metalness: 0.05 
+            });
+
+            const ringGeo = new THREE.RingGeometry(10, 14, 64);
+            const ring = new THREE.Mesh(ringGeo, pathMaterial);
+            ring.name = "walking_path";
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.y = 0.05;
+            ring.receiveShadow = true;
+            scene.add(ring);
+
+            const connectors = [
+                { x: 15, z: 45 }, { x: -40, z: 15 }, { x: -25, z: -25 }, { x: 25, z: -25 }
+            ];
+
+            connectors.forEach(target => {
+                const startX = (target.x / Math.sqrt(target.x**2 + target.z**2)) * 12;
+                const startZ = (target.z / Math.sqrt(target.x**2 + target.z**2)) * 12;
+                const dx = target.x - startX;
+                const dz = target.z - startZ;
+                const length = Math.sqrt(dx*dx + dz*dz);
+                const angle = Math.atan2(dz, dx);
+                const pathPartGeo = new THREE.PlaneGeometry(length, 3.5);
+                const pathPart = new THREE.Mesh(pathPartGeo, pathMaterial);
+                pathPart.name = "walking_path";
+                pathPart.rotation.x = -Math.PI / 2;
+                pathPart.rotation.z = angle;
+                pathPart.position.set(startX + dx/2, 0.05, startZ + dz/2);
+                pathPart.receiveShadow = true;
+                scene.add(pathPart);
+            });
+            
+            const fountainCircleGeo = new THREE.CircleGeometry(7.5, 32);
+            const fountainCircle = new THREE.Mesh(fountainCircleGeo, pathMaterial);
+            fountainCircle.name = "walking_path";
+            fountainCircle.rotation.x = -Math.PI / 2;
+            fountainCircle.position.y = 0.05;
+            fountainCircle.receiveShadow = true;
+            scene.add(fountainCircle);
+        }
+
+        function createSkyscraper() {
+            const group = new THREE.Group();
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x222d3d, metalness: 0.6, roughness: 0.2 });
+            const windowMat = new THREE.MeshBasicMaterial({ color: 0x88ccff, transparent: true, opacity: 0.5 });
+            const tower = new THREE.Mesh(new THREE.BoxGeometry(8, 35, 8), bodyMat);
+            tower.position.y = 17.5;
+            group.add(tower);
+            for(let y = 4; y < 33; y += 4) {
+                for(let i = 0; i < 4; i++) {
+                    const win = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 2), windowMat);
+                    const angle = (i * Math.PI) / 2;
+                    win.position.set(Math.cos(angle) * 4.01, y, Math.sin(angle) * 4.01);
+                    win.rotation.y = -angle;
+                    group.add(win);
+                }
+            }
+            group.traverse(o => { if(o.isMesh) { o.castShadow = true; o.receiveShadow = true; }});
+            return group;
+        }
+
+        function createLibrary() {
+            const group = new THREE.Group();
+            const stoneMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.9 });
+            const base = new THREE.Mesh(new THREE.BoxGeometry(16, 1.5, 12), stoneMat);
+            base.position.y = 0.75;
+            const mainBlock = new THREE.Mesh(new THREE.BoxGeometry(14, 8, 10), stoneMat);
+            mainBlock.position.y = 5.5;
+            const roof = new THREE.Mesh(new THREE.CylinderGeometry(7, 7, 10, 3, 1, false, 0, Math.PI), stoneMat);
+            roof.rotation.z = Math.PI / 2;
+            roof.rotation.y = Math.PI / 2;
+            roof.position.y = 9.5;
+            group.add(base, mainBlock, roof);
+            group.traverse(o => { if(o.isMesh) { o.castShadow = true; o.receiveShadow = true; }});
+            return group;
+        }
+
+        function createObelisk() {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.4 });
+            const base = new THREE.Mesh(new THREE.BoxGeometry(6, 1.5, 6), mat);
+            const pillar = new THREE.Mesh(new THREE.CylinderGeometry(1, 2, 18, 4), mat);
+            pillar.position.y = 9;
+            group.add(base, pillar);
+            group.traverse(o => { if(o.isMesh) { o.castShadow = true; o.receiveShadow = true; }});
+            return group;
+        }
+
+        function createPavilion() {
+            const group = new THREE.Group();
+            const frameMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2 });
+            const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x88ccff, transparent: true, opacity: 0.4, transmission: 0.5, thickness: 0.5 });
+            const floor = new THREE.Mesh(new THREE.BoxGeometry(10, 0.4, 10), frameMat);
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(10.5, 0.2, 10.5), frameMat);
+            roof.position.y = 7;
+            for(let i=0; i<4; i++) {
+                const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.5, 7, 0.5), frameMat);
+                pillar.position.set(i<2 ? 4.5 : -4.5, 3.5, i%2 ? 4.5 : -4.5);
+                group.add(pillar);
+            }
+            const walls = new THREE.Mesh(new THREE.BoxGeometry(9.5, 6.8, 9.5), glassMat);
+            walls.position.y = 3.5;
+            group.add(floor, roof, walls);
+            group.traverse(o => { if(o.isMesh) { o.castShadow = true; o.receiveShadow = true; }});
+            return group;
+        }
+
+        function createTree() {
+            const group = new THREE.Group();
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3d2b1f });
+            const leafMat = new THREE.MeshStandardMaterial({ color: 0x1a3314, roughness: 0.8 });
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 6), trunkMat);
+            trunk.position.y = 3;
+            const canopy = new THREE.Mesh(new THREE.IcosahedronGeometry(4, 1), leafMat);
+            canopy.position.y = 8;
+            group.add(trunk, canopy);
+            group.traverse(o => o.castShadow = true);
+            return group;
+        }
+
+        function createFountain() {
+            const mat = new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.2 });
+            const basin = new THREE.Mesh(new THREE.CylinderGeometry(6, 7, 1.2, 32), mat);
+            basin.position.y = 0.65;
+            const core = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.5, 4, 16), mat);
+            core.position.y = 3;
+            scene.add(basin, core);
+            const pCount = 200;
+            const pGeo = new THREE.SphereGeometry(0.12, 6, 6);
+            const pMat = new THREE.MeshPhongMaterial({ color: 0x88e4ff, emissive: 0x224466 });
+            for(let i=0; i<pCount; i++) {
+                const p = new THREE.Mesh(pGeo, pMat);
+                resetParticle(p);
+                scene.add(p);
+                fountainParticles.push(p);
+            }
+        }
+
+        function createMovingCharacter() {
+            // Replaced the vehicle with a human-like blocky character
+            character = new THREE.Group();
+            const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+            const shirtMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6 });
+            const pantsMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
+
+            // Torso
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.4), shirtMat);
+            torso.position.y = 1.8;
+            character.add(torso);
+
+            // Head
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), skinMat);
+            head.position.y = 2.7;
+            character.add(head);
+
+            // Legs
+            const legGeo = new THREE.BoxGeometry(0.3, 1.2, 0.3);
+            const leftLeg = new THREE.Mesh(legGeo, pantsMat);
+            leftLeg.position.set(-0.2, 0.6, 0);
+            character.add(leftLeg);
+            character.userData.leftLeg = leftLeg;
+
+            const rightLeg = new THREE.Mesh(legGeo, pantsMat);
+            rightLeg.position.set(0.2, 0.6, 0);
+            character.add(rightLeg);
+            character.userData.rightLeg = rightLeg;
+
+            // Arms
+            const armGeo = new THREE.BoxGeometry(0.25, 1.2, 0.25);
+            const leftArm = new THREE.Mesh(armGeo, shirtMat);
+            leftArm.position.set(-0.55, 1.8, 0);
+            character.add(leftArm);
+            character.userData.leftArm = leftArm;
+
+            const rightArm = new THREE.Mesh(armGeo, shirtMat);
+            rightArm.position.set(0.55, 1.8, 0);
+            character.add(rightArm);
+            character.userData.rightArm = rightArm;
+
+            character.traverse(o => { if(o.isMesh) o.castShadow = true; });
+            scene.add(character);
+        }
+
+        function createBenches() {
+            const mat = new THREE.MeshStandardMaterial({ color: 0x451a03 });
+            for(let i=0; i<6; i++) {
+                const bench = new THREE.Group();
+                const seat = new THREE.Mesh(new THREE.BoxGeometry(4, 0.2, 1.5), mat);
+                seat.position.y = 0.8;
+                const back = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 0.2), mat);
+                back.position.set(0, 1.5, -0.7);
+                bench.add(seat, back);
+                const angle = (i/6) * Math.PI * 2 + Math.PI/12;
+                bench.position.set(Math.cos(angle)*16.5, 0.1, Math.sin(angle)*16.5);
+                bench.lookAt(0,0,0);
+                scene.add(bench);
+            }
+        }
+
+        function resetParticle(p) {
+            p.position.set(0, 4.5, 0);
+            const spread = 0.2;
+            p.userData.vel = new THREE.Vector3(
+                (Math.random() - 0.5) * spread,
+                0.15 + Math.random() * 0.15,
+                (Math.random() - 0.5) * spread
+            );
+        }
+
+        function toggleProjection() {
+            isOrtho = !isOrtho;
+            const target = controls.target.clone();
+            if (isOrtho) {
+                camera = orthoCam;
+                document.getElementById('proj-type').innerText = "Orthographic";
+            } else {
+                camera = perspectiveCam;
+                document.getElementById('proj-type').innerText = "Perspective";
+            }
+            controls.object = camera;
+            controls.target.copy(target);
+            controls.update();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            // Forward and Backward Walking Logic
+            if (character) {
+                // Path from center (0,0) to Skyscraper (15, 45)
+                const startX = 0; const startZ = 12;
+                const endX = 15; const endZ = 42;
+                
+                // oscillate between 0 and 1
+                const speedScale = sceneParams.walkSpeed;
+                const progress = (Math.sin(time * (10/speedScale)) + 1) / 2;
+                
+                character.position.x = startX + (endX - startX) * progress;
+                character.position.z = startZ + (endZ - startZ) * progress;
+
+                // Orientation: Look towards direction of movement
+                const direction = Math.cos(time * (10/speedScale)) > 0 ? 1 : -1;
+                if (direction === 1) {
+                    character.lookAt(endX, 0, endZ);
+                } else {
+                    character.lookAt(startX, 0, startZ);
+                }
+
+                // Leg/Arm swing animation
+                const swing = Math.sin(time * 10);
+                character.userData.leftLeg.rotation.x = swing * 0.5;
+                character.userData.rightLeg.rotation.x = -swing * 0.5;
+                character.userData.leftArm.rotation.x = -swing * 0.5;
+                character.userData.rightArm.rotation.x = swing * 0.5;
+            }
+
+            treeGroup.forEach((t, i) => {
+                t.rotation.x = Math.sin(time + i) * 0.03;
+                t.rotation.z = Math.cos(time * 0.8 + i) * 0.02;
+            });
+
+            fountainParticles.forEach(p => {
+                p.position.add(p.userData.vel);
+                p.userData.vel.y -= sceneParams.fountainGravity;
+                if(p.position.y < 0.65) resetParticle(p);
+            });
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            const aspect = window.innerWidth / window.innerHeight;
+            perspectiveCam.aspect = aspect; perspectiveCam.updateProjectionMatrix();
+            const d = 50; orthoCam.left = -d * aspect; orthoCam.right = d * aspect; orthoCam.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'q') camera.position.y += 1;
+            if (e.key.toLowerCase() === 'e') camera.position.y -= 1;
+        });
+
+        window.onload = init;
+    </script>
+</body>
+</html>
